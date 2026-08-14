@@ -1,0 +1,16 @@
+# runtime artefacts
+*.db
+*.db-wal
+*.db-shm
+notifications.log
+
+# python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# node
+node_modules/
+web/dist/
+*.tsbuildinfo
