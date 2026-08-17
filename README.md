@@ -28,15 +28,16 @@ make test         # 39 tests
 make reset        # wipe the database and start over
 ```
 
-`make api` seeds four users and nine rules on first run. For frontend work, `make web` runs
+`make api` seeds ten people and nine rules on first run. For frontend work, `make web` runs
 the Vite dev server on :5173 and proxies `/api` to the backend.
 
 ## What to look at
 
-1. **Open `/app` as Priya (billing lead)** and run the replay. The incident arc builds:
+1. **Open `/app` as Priya Raman (billing lead)** and run the replay. The incident arc builds:
    coverage gap → SLA at risk → breach → backlog, then resolves as it recovers.
-2. **Switch to Jordan (agent a_19)** in the top-right picker. Three messages for a 35-minute
+2. **Switch to Jordan Reyes (agent)** in the top-right picker. Three messages for a 35-minute
    adherence drift: a nudge, a reminder, a resolve. Same event stream, completely different inbox.
+   Most of the floor has no rules of their own — their inbox says so rather than looking broken.
 3. **Watch "Why it stayed quiet."** 25 sent, 83 suppressed, each with a reason in English.
 4. **Create a rule.** It reads as a sentence and previews what you'll receive before you save.
 5. **Try to break it.** Set an SLA threshold of `80`. The error tells you what you meant.
@@ -52,8 +53,8 @@ agent between queues, escalate. They watch queues and their own team.
 
 **Agents** care about one thing: themselves. Most adherence breaks are accidental, so telling
 the agent *first* means most problems get fixed without a manager involved. The seeded rules
-give the agent a 10-minute fuse and their lead a 20-minute one, so `a_88` is nudged at 10:15
-and Marcus only hears about it at 10:25. That routing is configuration, not code.
+give the agent a 10-minute fuse and their lead a 20-minute one, so Sam Okafor is nudged at 10:15
+and Marcus Hale only hears about it at 10:25. That routing is configuration, not code.
 
 **Heads of support are deliberately out of scope.** They want a scheduled digest — a different
 surface with aggregation and trend comparison. It would have been a second half-finished
