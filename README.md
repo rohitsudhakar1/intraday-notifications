@@ -13,6 +13,9 @@ without becoming noise.
 
 ## Run it
 
+Needs **Python 3.10+** and **Node 18+**. Nothing else — the database is a SQLite file the
+app creates on first run.
+
 ```bash
 make install      # venv + pip install + npm install
 make build        # build the React app so the API can serve it
@@ -30,6 +33,10 @@ make reset        # wipe the database and start over
 
 `make api` seeds ten people and nine rules on first run. For frontend work, `make web` runs
 the Vite dev server on :5173 and proxies `/api` to the backend.
+
+No make? The targets are one-liners: `python3 -m venv .venv && .venv/bin/pip install -r
+requirements.txt`, `cd web && npm install && npm run build`, `.venv/bin/uvicorn app.main:app
+--port 8000`, `.venv/bin/python scripts/replay.py`.
 
 ## What to look at
 
