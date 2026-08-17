@@ -107,6 +107,7 @@ export function App() {
               user={currentUser}
               ruleCount={myRules.filter((rule) => rule.enabled).length}
               feedHasRun={state !== null && state.queues.length > 0}
+              openEpisodes={state?.open_episodes ?? []}
             />
           ) : (
             catalog && (

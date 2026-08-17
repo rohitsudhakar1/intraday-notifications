@@ -1,4 +1,5 @@
-import type { Notification, NotificationKind, Severity, User } from "../api";
+import { useState } from "react";
+import type { Notification, NotificationKind, OpenEpisode, Severity, User } from "../api";
 import { clockTime } from "../api";
 
 const KIND_LABEL: Record<NotificationKind, string> = {
@@ -8,9 +9,30 @@ const KIND_LABEL: Record<NotificationKind, string> = {
   digest: "held back",
 };
 
+const SEVERITY_RANK: Record<string, number> = { critical: 3, warning: 2, info: 1 };
+
 function tone(notification: Notification): string {
   if (notification.kind === "resolved") return "ok";
   return notification.severity;
+}
+
+/** What a lead wants mid-incident is not "criticals" — a resolved critical is
+ *  the good news, and it sits at the top of a severity-sorted list getting in
+ *  the way. What they want is what is still broken, worst first.
+ *
+ *  A notification is still live if the episode that produced it is open. The
+ *  engine already tracks that, so we match on (rule_id, subject_id) rather than
+ *  guessing from the message. */
+function stillBroken(notifications: Notification[], openEpisodes: OpenEpisode[]) {
+  const live = new Set(openEpisodes.map((e) => `${e.rule_id}:${e.subject_id}`));
+  return notifications
+    .filter((n) => n.kind === "alert" || n.kind === "reminder")
+    .filter((n) => live.has(`${n.rule_id}:${n.subject_id}`))
+    .sort(
+      (a, b) =>
+        (SEVERITY_RANK[b.severity] ?? 0) - (SEVERITY_RANK[a.severity] ?? 0) ||
+        b.event_ts.localeCompare(a.event_ts),
+    );
 }
 
 /** An empty inbox has three different causes and only one of them is a problem
@@ -43,13 +65,18 @@ export function Inbox({
   user,
   ruleCount,
   feedHasRun,
+  openEpisodes,
 }: {
   notifications: Notification[];
   user: User | undefined;
   ruleCount: number;
   feedHasRun: boolean;
+  openEpisodes: OpenEpisode[];
 }) {
-  const open = notifications.filter((n) => n.kind === "alert" || n.kind === "reminder");
+  const [onlyLive, setOnlyLive] = useState(false);
+
+  const live = stillBroken(notifications, openEpisodes);
+  const shown = onlyLive ? live : notifications;
 
   return (
     <section className="card">
@@ -58,15 +85,30 @@ export function Inbox({
         <p>
           {user ? `${user.name} · ${user.slack_handle ?? user.email ?? ""}` : ""}
           {notifications.length > 0 &&
-            ` · ${notifications.length} message${notifications.length === 1 ? "" : "s"}, ${open.length} still open`}
+            ` · ${notifications.length} message${notifications.length === 1 ? "" : "s"}`}
         </p>
+
+        <div className="spacer" />
+
+        <div className="tabs">
+          <button data-active={!onlyLive} onClick={() => setOnlyLive(false)}>
+            Everything
+          </button>
+          <button data-active={onlyLive} onClick={() => setOnlyLive(true)}>
+            Needs attention {live.length > 0 && `(${live.length})`}
+          </button>
+        </div>
       </header>
 
       {notifications.length === 0 ? (
         emptyState(ruleCount, feedHasRun)
+      ) : shown.length === 0 ? (
+        <p className="empty">
+          Nothing is broken right now. Everything here has resolved.
+        </p>
       ) : (
         <div className="feed">
-          {notifications.map((notification) => (
+          {shown.map((notification) => (
             <article
               key={notification.id}
               className="note"

@@ -120,6 +120,11 @@ button { cursor: pointer; }
 
 .card-body { padding: 14px 16px; }
 
+/* The inbox header carries a filter. Baseline alignment is right for the
+   title and subtitle but wrong for a control, so the control opts out. */
+.card > header .tabs { align-self: center; flex-shrink: 0; }
+.card > header .tabs button { font-size: 12.5px; padding: 4px 10px; }
+
 .empty { padding: 28px 16px; text-align: center; color: var(--ink-faint); font-size: 13px; }
 
 /* ------------------------------------------------------------------- inbox */
