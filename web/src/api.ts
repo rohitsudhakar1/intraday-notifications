@@ -92,6 +92,7 @@ export interface QueueState {
 
 export interface AgentState {
   agent_id: string;
+  name: string;
   state: string;
   entered_at: string;
   queue_ids: string[];

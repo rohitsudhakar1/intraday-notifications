@@ -341,14 +341,19 @@ class Engine:
 
         # ---- predicate broke: close the episode.
         if not holds:
-            if was_open:
-                self._write_state(rule["id"], subject_id, False, None, None, 0, value, ts)
-                # Only tell them it recovered if we told them it broke.
-                if fired_at is not None and rule["notify_on_resolve"]:
-                    self._notify(rule, subject_id, value, ts, kind="resolved")
-                    return 1
-            else:
-                self._write_state(rule["id"], subject_id, False, None, None, 0, value, ts)
+            # Still false, and it was already false. Nothing about the episode
+            # has changed, so there is nothing to write. This is the common case
+            # by a wide margin -- most rules are not firing for most subjects
+            # most of the time -- and writing a row per evaluation would make
+            # the quiet path the most expensive one in the system.
+            if not was_open:
+                return 0
+
+            self._write_state(rule["id"], subject_id, False, None, None, 0, value, ts)
+            # Only tell them it recovered if we told them it broke.
+            if fired_at is not None and rule["notify_on_resolve"]:
+                self._notify(rule, subject_id, value, ts, kind="resolved")
+                return 1
             return 0
 
         # ---- predicate holds. Open the episode if this is the rising edge.
@@ -654,7 +659,10 @@ class Engine:
 
         shown = catalog.format_value(value, metric.unit)
         limit = catalog.format_value(rule["threshold"], metric.unit)
-        body = metric.phrase.format(subject=subject_id, value=shown, threshold=limit)
+        # Render the person's name, not their id. The id stays the id in the
+        # stored row and in every key -- this is a display concern only.
+        subject = self._display_name(subject_id)
+        body = metric.phrase.format(subject=subject, value=shown, threshold=limit)
 
         if kind == "resolved":
             title = f"Resolved: {rule['name']}"
@@ -663,9 +671,9 @@ class Engine:
             # than reporting "unknown", which reads as a bug to the person on
             # the other end.
             body = (
-                f"{subject_id} is back within limits ({shown})."
+                f"{subject} is back within limits ({shown})."
                 if value is not None
-                else f"{subject_id} no longer meets this condition."
+                else f"{subject} no longer meets this condition."
             )
         else:
             title = rule["name"] if kind == "alert" else f"Still open: {rule['name']}"
@@ -696,6 +704,17 @@ class Engine:
             recipient_handle=(recipient["slack_handle"] or recipient["email"]) if recipient else None,
             event_ts=_iso(ts),
         ))
+
+    def _display_name(self, subject_id: str) -> str:
+        """The name a human would use for this subject.
+
+        Agents get their roster name; queues are already readable, and anything
+        we have never heard of falls back to its id rather than rendering blank.
+        """
+        row = self.conn.execute(
+            "SELECT name FROM users WHERE agent_id = ?", (subject_id,)
+        ).fetchone()
+        return row["name"] if row else subject_id
 
     def _suppress(self, rule_id, subject_id, reason, detail, event_ts) -> None:
         self.conn.execute(

@@ -92,7 +92,7 @@ export function App() {
           <select id="who" value={me} onChange={(event) => setMe(event.target.value)}>
             {users.map((user) => (
               <option key={user.id} value={user.id}>
-                {user.name}
+                {user.name} · {user.role}
               </option>
             ))}
           </select>

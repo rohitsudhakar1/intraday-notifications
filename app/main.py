@@ -24,7 +24,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
-from . import catalog, db
+from . import catalog, db, notifier
 from .engine import Engine
 from .models import (
     AnyEvent, EventEnvelope, IngestResult, NotificationRead,
@@ -256,13 +256,18 @@ def get_state():
         "agents": [
             {
                 "agent_id": row["agent_id"],
+                "name": row["name"] or row["agent_id"],
                 "state": row["state"],
                 "entered_at": row["entered_at"],
                 "queue_ids": json.loads(row["queue_ids"]),
                 "in_violation": bool(row["in_violation"]),
                 "violation_started_at": row["violation_started_at"],
             }
-            for row in conn.execute("SELECT * FROM agent_states ORDER BY agent_id")
+            for row in conn.execute(
+                "SELECT a.*, u.name FROM agent_states a"
+                " LEFT JOIN users u ON u.agent_id = a.agent_id"
+                " ORDER BY a.agent_id"
+            )
         ],
         "open_episodes": [
             dict(row) for row in conn.execute(
@@ -275,13 +280,24 @@ def get_state():
 
 @app.post("/api/reset", status_code=204)
 def reset():
-    """Wipe everything except rules and users, so a demo can be re-run."""
+    """Wipe everything except rules and users, so a demo can be re-run.
+
+    The log file is truncated too. It is a view of the same run, and leaving it
+    behind means a second replay appends to the first -- which reads as the
+    system double-firing when it is doing nothing of the sort.
+    """
     for table in ("events", "notifications", "suppressions", "condition_states",
                   "agent_states", "queue_states"):
         conn.execute(f"DELETE FROM {table}")
     conn.commit()
     engine.now = None
     engine._last_sweep = None
+    engine._evaluated.clear()
+
+    try:
+        open(notifier.LOG_PATH, "w").close()
+    except OSError:
+        pass  # the log is a convenience; never fail a reset over it
 
 
 @app.get("/", include_in_schema=False)

@@ -12,11 +12,26 @@ from datetime import datetime, timezone
 
 from . import db
 
+# The feed identifies people as "a_11". Nobody on a support floor talks that
+# way, so every agent in the sample data gets a name here and notifications
+# render it instead. In a real deployment this table is the customer's roster,
+# synced from their HR or workforce system.
+#
+# The id stays the id everywhere that matters -- episode keys, joins,
+# de-duplication. Only the rendered message uses the name.
 USERS = [
-    ("u_priya",  "Priya (billing lead)", "lead",  None,   "@priya",  "priya@example.com"),
-    ("u_marcus", "Marcus (tier 2 lead)", "lead",  None,   "@marcus", "marcus@example.com"),
-    ("u_a19",    "Jordan (agent a_19)",  "agent", "a_19", "@jordan", "jordan@example.com"),
-    ("u_a88",    "Sam (agent a_88)",     "agent", "a_88", "@sam",    "sam@example.com"),
+    ("u_priya",  "Priya Raman",   "lead",  None,   "@priya",  "priya@example.com"),
+    ("u_marcus", "Marcus Hale",   "lead",  None,   "@marcus", "marcus@example.com"),
+    ("u_a19",    "Jordan Reyes",  "agent", "a_19", "@jordan", "jordan@example.com"),
+    ("u_a88",    "Sam Okafor",    "agent", "a_88", "@sam",    "sam@example.com"),
+    # The rest of the floor. No rules of their own yet, but their leads watch
+    # them, and their names should appear when they do.
+    ("u_a05",    "Ana Cruz",      "agent", "a_05", "@ana",    "ana@example.com"),
+    ("u_a07",    "Dev Patel",     "agent", "a_07", "@dev",    "dev@example.com"),
+    ("u_a11",    "Alex Chen",     "agent", "a_11", "@alex",   "alex@example.com"),
+    ("u_a23",    "Nina Sokolov",  "agent", "a_23", "@nina",   "nina@example.com"),
+    ("u_a31",    "Tom Bergeron",  "agent", "a_31", "@tom",    "tom@example.com"),
+    ("u_a42",    "Riley Osei",    "agent", "a_42", "@riley",  "riley@example.com"),
 ]
 
 # name, subject, metric, op, threshold, duration, scope_type, scope_ids,

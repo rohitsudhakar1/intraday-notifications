@@ -102,7 +102,7 @@ export function Sidebar({
             agents.map((agent: AgentState) => (
               <div className="agent-row" key={agent.agent_id}>
                 <span>
-                  <code>{agent.agent_id}</code>{" "}
+                  {agent.name}{" "}
                   <span style={{ color: "var(--ink-soft)" }}>{agent.state.replace("_", " ")}</span>
                 </span>
                 <span style={{ display: "flex", alignItems: "center", gap: 6 }}>

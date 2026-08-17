@@ -230,6 +230,17 @@ clock. `entered_at` only moves when the state actually changes, so a chatty upst
 `queue_states` keeps the whole snapshot payload, so derived metrics (SLA ratio, volume against
 forecast) recompute without re-reading the event log.
 
+`condition_states` is only written when something about the episode actually changes. Most rules
+are not firing for most subjects most of the time, and writing a row per evaluation would make the
+quiet path the most expensive one in the system — on this feed the guard removes 84% of writes
+(663 → 105) with identical output.
+
+**Names.** The feed identifies people as `a_11`; nobody on a support floor talks that way, so
+`users` doubles as a roster and notifications render "Alex Chen has been on one call for 50m". In a
+real deployment that table syncs from the customer's workforce system. The id stays the id
+everywhere it matters — episode keys, joins, de-duplication — and the name is used only in the
+rendered message.
+
 ### The metric catalog
 
 A rule row stores `metric` as a string; `app/catalog.py` is the lookup table that says what it
