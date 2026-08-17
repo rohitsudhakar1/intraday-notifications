@@ -13,12 +13,41 @@ function tone(notification: Notification): string {
   return notification.severity;
 }
 
+/** An empty inbox has three different causes and only one of them is a problem
+ *  the reader can act on. Telling someone to run the replay when they have
+ *  simply never made a rule sends them off to fix the wrong thing. */
+function emptyState(ruleCount: number, feedHasRun: boolean) {
+  if (!feedHasRun) {
+    return (
+      <p className="empty">
+        No events yet. Run <code>python scripts/replay.py</code> to play the morning through.
+      </p>
+    );
+  }
+  if (ruleCount === 0) {
+    return (
+      <p className="empty">
+        Nothing is set up to notify you. Open <b>Rules</b> to create one.
+      </p>
+    );
+  }
+  return (
+    <p className="empty">
+      All quiet — none of your {ruleCount} rule{ruleCount === 1 ? "" : "s"} has fired.
+    </p>
+  );
+}
+
 export function Inbox({
   notifications,
   user,
+  ruleCount,
+  feedHasRun,
 }: {
   notifications: Notification[];
   user: User | undefined;
+  ruleCount: number;
+  feedHasRun: boolean;
 }) {
   const open = notifications.filter((n) => n.kind === "alert" || n.kind === "reminder");
 
@@ -34,10 +63,7 @@ export function Inbox({
       </header>
 
       {notifications.length === 0 ? (
-        <p className="empty">
-          Nothing yet. Start the API and run <code>python scripts/replay.py</code> to
-          play the morning through.
-        </p>
+        emptyState(ruleCount, feedHasRun)
       ) : (
         <div className="feed">
           {notifications.map((notification) => (

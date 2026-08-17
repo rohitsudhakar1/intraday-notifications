@@ -102,7 +102,12 @@ export function App() {
       <div className="columns">
         <main>
           {tab === "inbox" ? (
-            <Inbox notifications={notifications} user={currentUser} />
+            <Inbox
+              notifications={notifications}
+              user={currentUser}
+              ruleCount={myRules.filter((rule) => rule.enabled).length}
+              feedHasRun={state !== null && state.queues.length > 0}
+            />
           ) : (
             catalog && (
               <RulesPanel
